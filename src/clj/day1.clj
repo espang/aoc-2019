@@ -1,6 +1,5 @@
 (ns clj.day1)
 
-
 (defn fuel-required [mass]
   (- (int (/ mass 3))
      2))
@@ -38,3 +37,4 @@
     (map read-string)
     (map fuel-required-with-fuel-mass)
     (reduce +)) ; => 4856963
+
