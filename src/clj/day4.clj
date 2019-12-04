@@ -23,4 +23,15 @@
 (assert (= (test-input 223450) false))
 (assert (= (test-input 123789) false))
 
-()
+; part 1
+(count (filter identity (map test-input input))) ; => 910
+
+; part 2
+(defn test-input2 [possible-password]
+  (let [digits (number->digits possible-password)
+        freqs  (frequencies digits)
+        dup?   (boolean (some #(= (val %) 2) freqs))
+        inc?   (apply <= digits)]
+    (and dup? inc?)))
+
+(count (filter identity (map test-input2 input))) ; => 598
