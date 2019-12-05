@@ -20,24 +20,19 @@
         (op (aget arr idx1)
             (aget arr idx2))))
 
-;Opcode 5 is jump-if-true: if the first parameter is non-zero, it sets the instruction pointer to the value from the second parameter. Otherwise, it does nothing.
-;Opcode 6 is jump-if-false: if the first parameter is zero, it sets the instruction pointer to the value from the second parameter. Otherwise, it does nothing.
-;Opcode 7 is less than: if the first parameter is less than the second parameter, it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
-;Opcode 8 is equals: if the first parameter is equal to the second parameter, it stores 1 in the position given by the third parameter. Otherwise, it stores 0.
-
 (defn process [coll inputs] 
   (let [arr (int-array coll)]
     (loop [idx    0
            inputs inputs]
       (let [parameter-value (aget arr idx)
             optcode         (mod parameter-value 100)
-            ; check if it is immediate or position mode (pm)
-            first-pm        (odd? (quot parameter-value 100))
-            first-idx       (if first-pm (+ 1 idx) (aget arr (+ 1 idx)))
-            second-pm       (odd? (quot parameter-value 1000))
-            second-idx      (if second-pm (+ 2 idx) (aget arr (+ 2 idx)))
-            third-pm        (odd? (quot parameter-value 10000))
-            third-idx       (if third-pm (+ 3 idx) (aget arr (+ 3 idx)))]
+            ; check if it is immediate (im) or position mode
+            first-im?       (odd? (quot parameter-value 100))
+            first-idx       (if first-im? (+ 1 idx) (aget arr (+ 1 idx)))
+            second-im?      (odd? (quot parameter-value 1000))
+            second-idx      (if second-im? (+ 2 idx) (aget arr (+ 2 idx)))
+            third-im?       (odd? (quot parameter-value 10000))
+            third-idx       (if third-im? (+ 3 idx) (aget arr (+ 3 idx)))]
         (case optcode
           1 (do (command-with-op arr first-idx second-idx third-idx +)
                 (recur (+ idx 4) inputs))
@@ -68,4 +63,5 @@
 (process input-coll [1]) ; => 7259358
 
 ; part 2
-(process input-coll [5]) ; =? 11826654
+; returns ArrayIndexOutOfBoundsException after printing the result.
+(process input-coll [5]) ; => 11826654
