@@ -13,26 +13,20 @@
      (apply min-key #(% 0)))
 
 ; part 2
-(def pixels
-  (->> input
-       (partition 150)
-       (apply map list)))
-
 (defn resolve-pixel [pixel]
   (let [pixel (drop-while #(= % 2) pixel)]
     (if (nil? pixel)
-      2
+      " " ; transparent -> black
       (if (= 1 (first pixel)) "#" " "))))
 
-(defn print-pixels [pixels w t]
-  (loop [pixels pixels
-         x      0]
-    (if (empty? pixels)
-      nil
-      (do
-        (when (zero? (mod x w))
-          (println ""))
-        (print (resolve-pixel (first pixels)))
-        (recur (rest pixels) (inc x))))))
-
-(print-pixels pixels 25 6)
+(->> input
+     ; into list of layers
+     (partition 150)
+     ; transpose into list of pixels
+     (apply map list)
+     (map resolve-pixel)
+     ; partition pixel into rows
+     (partition 25)
+     (map #(apply str %))
+     (map println)
+     (doall))
