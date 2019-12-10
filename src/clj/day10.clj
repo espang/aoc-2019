@@ -58,13 +58,44 @@
           vectors))
 
 (defn best-from [system]
-  (apply max
+  (apply max-key first
          (reduce (fn [acc itm]
-                   (conj acc (-> itm
-                                 (vectors system)
-                                 (remove-duplicates)
-                                 (count))))
+                   (conj acc [(-> itm
+                                   (vectors system)
+                                   (remove-duplicates)
+                                   (count))
+                              itm]))
                  #{}
                  system)))
 
-(best-from test-system)
+; part 1
+(println
+ (best-from input1)) ; [288 [17 22]]
+
+; part 2
+(defn dot [[x y] [x' y']]
+  (+ (* x x') (* y y')))
+
+(defn abs [[x y]]
+  (Math/sqrt (+ (* x x) (* y y))))
+
+(defn angle [v1 v2]
+  (Math/acos (/ (dot v1 v2) (* (abs v1) (abs v2)))))
+
+; create list of 288 seen obstacles
+(def seen-directions (-> [17 22] (vectors input1) (remove-duplicates)))
+(def left (filter #(< (first %) 0) seen-directions))
+(def right (remove #(< (first %) 0) seen-directions))
+(count right) ; => 129
+
+(count left) ; => 159
+; find the direction of the 71st largest in left
+; find the direction of the 88st smallest in left
+
+(nth
+ (into []
+       (sort-by first
+                (for [v left] [(angle [0 -1] v) v])))
+ 88); [-11 -6]
+
+; [17 22] -> [6 16]
