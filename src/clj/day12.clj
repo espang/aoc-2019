@@ -46,17 +46,11 @@
 (period z-pos vel)
 ; 102356
 
-(defn gcd 
-      [a b]
-      (if (zero? b)
-      a
-      (recur b, (mod a b))))
- 
-(defn lcm 
-      [a b]
-      (/ (* a b) (gcd a b)))
+(defn gcd [a b]
+  (if (zero? b) a (recur b (mod a b))))
 
-(defn lcmv [& v] (reduce lcm v))
+(defn lcm [a b]
+  (/ (* a b) (gcd a b)))
 
-(println (lcmv 268296 161428 102356))
+(println (reduce lcm [268296 161428 102356]))
 
