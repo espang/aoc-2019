@@ -25,15 +25,12 @@
                (map + (abs x-pos) (abs y-pos) (abs z-pos))
                (map + (abs x-vel) (abs y-vel) (abs z-vel)))))
 
-(defn period [pos vel]
-  (loop [p     pos
-         v     vel
-         count 0
-         seen  #{}]
-    (if (contains? seen [p v])
+(defn period [pv]
+  (loop [pv'   (apply-step pv) 
+         count 1]
+    (if (= pv' pv)
       count
-      (let [[p' v'] (apply-step p v)]
-        (recur p' v' (inc count) (conj seen [p v]))))))
+      (recur (apply-step pv') (inc count)))))
 
 (defn gcd [a b]
   (if (zero? b) a (recur b (mod a b))))
@@ -42,8 +39,8 @@
   (/ (* a b) (gcd a b)))
 
 (defn solve []
-  (let [p1 (period x-pos vel)
-        p2 (period y-pos vel)
-        p3 (period z-pos vel)]
+  (let [p1 (period [x-pos vel])
+        p2 (period [y-pos vel])
+        p3 (period [z-pos vel])]
     (println (reduce lcm [p1 p2 p3]))))
-
+(time (solve))
