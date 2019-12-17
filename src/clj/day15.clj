@@ -17,103 +17,154 @@
   (case cmd
     1N [0  1]
     2N [0 -1]
-    3N [1  0]
-    4N [-1 0]))
+    3N [-1  0]
+    4N [1 0]))
 
 (defn move->cmd [move]
   (case move
     [0  1] 1N
     [0 -1] 2N
-    [1  0] 3N
-    [-1 0] 4N
+    [-1 0] 3N
+    [ 1 0] 4N
     nil))
 
+(defn cmd->inverse [cmd]
+  (case cmd
+    1N 2N
+    2N 1N
+    3N 4N
+    4N 3N))
+
 (defn robot-state []
-  {:graph   (uber/graph)
-   ; current position. exploring parts around it
-   :pos     [0 0]
-   :explore (list [1 0] [-1 0] [0 -1])
-   :next    [0 1]
-   ; queue contains nodes to explore next
-   :queue   (clojure.lang.PersistentQueue/EMPTY)
+  {:graph    (uber/graph)
+   :mode     :explore
+   :cmds     [1N 2N 3N 4N]
+   :pos      [0 0]
+   :frontier (clojure.lang.PersistentQueue/EMPTY)
    ; keep track of walls and nodes
    :walls   #{}
    :nodes   #{}})
 
-(defn select-new-target [{:keys [pos explore queue graph] :as state}]
-  (if (empty? explore)
-    ; move somewhere else
-    (let [target (peek queue)
-          next   (:dest (first alg/edges-in-path
-                               (alg/shortest-path graph)))]
+(defn path->cmds [start end graph]
+  (let [path  (alg/shortest-path graph start end)
+        edges (alg/edges-in-path path)
+        moves (map #(mapv - (:dest %) (:src %)) edges)
+        cmds  (map move->cmd moves)]
+    cmds))
+
+(defmulti hit-wall :mode)
+
+(defmethod hit-wall :explore [state]
+  (let [[cmd & cmds] (:cmds state)
+        walls        (conj (:walls state) (mapv + (:pos state)
+                                                  (cmd->move cmd)))]
+    (if (empty? cmds)
       (assoc state
-             :state :move
-             :target (peek queue)
-             :queue  (pop queue)
-             :next   next))
-    ; explore more
-    (assoc state
-           :next    (first explore)
-           :explore (rest explore))))
+             :mode     :move
+             :cmds     (path->cmds (:pos state) (peek (:frontier state)) (:graph state))
+             :frontier (pop (:frontier state))
+             :walls walls)
+      (assoc state
+             :cmds cmds
+             :walls walls))))
 
-(defn hit-wall [{:keys [walls next-step] :as state}]
-  (select-new-target
-   (assoc state :walls (conj walls next-step))))
+(defmethod hit-wall :move [state]
+  (throw (Exception. "shouldn't hit walls in move mode!")))
 
-(defn moved [{:keys [pos next target graph nodes] :as state}]
-  (if (= target next)
-    
-    
-    ;
-    )
-  (let [g (uber/add-edges graph [pos next])])
-  (let [p' (mapv + pos (movement next-cmd))]
-    (if (contains? distance p')
-      ; moving to a new field along existing paths
-      (assoc state 
-             :pos   p'
-             :next-cmd (next-step p' next-to state))
-      ; found a new field
-      (select-new-target
-       (assoc state
-              :pos p'
-              :distance (assoc distance p' (inc (distance pos))))))))
+(defmulti moved :mode)
 
-(defn found-target [{:keys [pos distance] :as state}]
-  (println (pos distance))
-  (throw (Exception. "done")))
+(defmethod moved :explore [state]
+  (let [[cmd & cmds] (:cmds state)
+        moved-to     (mapv + (:pos state) (cmd->move cmd))]
+    (if (:step-back state)
+      ; step back to continue exploring from moved-to
+      (if (empty? cmds)
+        (if (empty? (:frontier state))
+          (assoc state
+                 :cmds (list :stop))
+          (assoc state
+                 :pos       moved-to
+                 :step-back false
+                 :mode      :move
+                 :cmds      (path->cmds moved-to (peek (:frontier state)) (:graph state))
+                 :frontier  (pop (:frontier state))))
+        (assoc state
+               :step-back false
+               :pos  moved-to
+               :cmds cmds))
+      ; new point
+      (let [frontier (if (contains? (:nodes state) moved-to)
+                       (:frontier state)
+                       (conj (:frontier state) moved-to))]
+        (assoc state
+               :pos moved-to
+               :graph (uber/add-edges (:graph state) [(:pos state) moved-to])
+               :cmds  (conj cmds (cmd->inverse cmd))
+               :step-back true
+               :nodes (conj (:nodes state) moved-to)
+               :frontier frontier)))))
+
+(defmethod moved :move [state]
+  (let [[cmd & cmds] (:cmds state)
+        moved-to (mapv + (:pos state) (cmd->move cmd))]
+    (if (empty? cmds)
+      (assoc state
+             :mode :explore
+             :cmds (list 1N 2N 3N 4N)
+             :pos  moved-to)
+      (assoc state
+             :cmds cmds
+             :pos  moved-to))))
+
+(defn found-target [state]
+  (let [[cmd & cmds] (:cmds state)
+        moved-to (mapv + (:pos state) (cmd->move cmd))]
+    (println "target " moved-to)
+    (println "steps: " (count (path->cmds [0 0] (:pos state) (:graph state))))
+    (moved (assoc state :ox-sys moved-to))))
 
 (deftype BFSRobot [state]
   ic/InOutput
-  (input-from [x] (move->cmd (:next-step state)))
+  (input-from [x] 
+    (first (:cmds state)))
   (output-into [x v]
     (case v
       ; hit wall
-      0N (hit-wall state)
+      0N (BFSRobot. (hit-wall state))
       ; did step
-      1N (moved state)
+      1N (BFSRobot. (moved state))
       ; found target
-      2N (found-target state))))
+      2N (BFSRobot. (found-target state)))))
+
+(robot-state)
+(def ret
+  (ic/run (into-array extended-input) (BFSRobot. (robot-state))))
+
+(into []
+      (:frontier
+       (.state ret)))
+(:cmds (.state ret))
 
 (defn to-pixel [p]
   (if (= p [0 0])
     "S"
-    (if (= p (:ox-sys (.state result)))
+    (if (= p (:ox-sys (.state ret)))
       "T"
-      (if (contains? (:barriers (.state result)) p)
+      (if (contains? (:walls (.state ret)) p)
         "#"
-        (if (contains? (:ways (.state result)) p)
+        (if (contains? (:nodes (.state ret)) p)
           "."
           " ")))))
 
-(def pixels (for [x (range -30 30)
-                  y (range -30 35)]
+(def pixels (for [x (range -40 20)
+                  y (range -20 25)]
               (to-pixel [x y])))
 
 (->> pixels 
      (flatten)
-     (partition 65)
+     (partition 45)
      (apply map list)
      (map #(apply str %))
      (map println)
      (doall))
+
