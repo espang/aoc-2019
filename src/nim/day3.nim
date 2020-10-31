@@ -1,6 +1,7 @@
 import sets
 import sequtils
 import strutils
+import tables
 
 type
   Point = tuple[x, y: int]
@@ -74,3 +75,34 @@ let min_index = minIndex(distances)
 
 echo "closest point: ", intersections[min_index]
 echo "with distance: ", distances[min_index]
+
+
+# part2:
+proc steps_to(wire: seq[string]): Table[Point, int] =
+  var
+    t: Table[Point, int]
+    steps_done = 0
+    point = (0, 0)
+  for command in wire:
+    let (dir, steps) = parse_command(command)
+    for i in 0.. steps-1:
+      point = point.do_step(dir)
+      steps_done += 1
+      if not t.hasKey(point):
+        t[point] = steps_done
+  t
+
+proc find_min(w1, w2: Table[Point, int]): (Point, int) =
+  var minimum: int
+  var p: Point
+  for k in w1.keys():
+    if w2.hasKey(k):
+      let dist = w1[k] + w2[k]
+      if dist < minimum or minimum == 0:
+        minimum = dist
+        p = k
+  (p, minimum)
+
+let points_with_dist1 = steps_to(wire1)
+let points_with_dist2 = steps_to(wire2)
+echo find_min(points_with_dist1, points_with_dist2)
