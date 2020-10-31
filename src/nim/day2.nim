@@ -1,6 +1,10 @@
 import sequtils
 import strutils
 
+# optcode one two three
+# 1 -> program[three] = program[one] + program[two]
+# 2 -> program[three] = program[one] * program[two]
+# 99 -> end
 proc step(program: var seq[int], index: int): (int, bool) =
   let optcode = program[index]
   case optcode
@@ -38,17 +42,10 @@ var program_part1 = raw_program_part1.strip().split(",").map(parseInt)
 program_part1[1] = 12
 program_part1[2] = 2
 loop(program_part1)
+
 echo "result part1: ", program_part1[0]
 
-# optcode one two three
-# 1 -> program[three] = program[one] + program[two]
-# 2 -> program[three] = program[one] * program[two]
-# 99 -> end
-
-
-
 # part 2:
-
 proc loop_with(program: seq[int], noun, verb: int): int =
   var p = program
   p[1] = noun
