@@ -2,3 +2,6 @@ resources/
 input*
 .cpcache/
 .nrepl-port
+*input.txt
+src/nim/*
+!src/nim/*.nim
