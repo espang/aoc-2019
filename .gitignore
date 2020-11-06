@@ -4,4 +4,6 @@ input*
 .nrepl-port
 *input.txt
 src/nim/*
+src/pony/*
+!src/pony/*/*.pony
 !src/nim/*.nim
