@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "Xx0a9gNaUMFmRJBEHRoYWtUp7Nt7zWPlPJtjUaSpXASuwKYn2TZEiXq2HDD322tbxyrjgIpu01S12vWFm/ROcg==",
+  "success": true,
+  "projectFilePath": "/Users/eike/Code/private/aoc-2019/src/fsharp/aoc/aoc.fsproj",
+  "expectedPackageFiles": [
+    "/Users/eike/.nuget/packages/fsharp.core/4.7.2/fsharp.core.4.7.2.nupkg.sha512"
+  ],
+  "logs": []
+}
