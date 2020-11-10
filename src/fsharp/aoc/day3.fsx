@@ -26,18 +26,21 @@ let dirFromStr s =
 
 let addPoints (dx, dy) (x, y) = x + dx, y + dy
 
+let step dir (x, y) =
+    let t =
+        match dir with
+        | Up -> 0, 1
+        | Down -> 0, -1
+        | Left -> -1, 0
+        | Right -> 1, 0
+
+    addPoints t (x, y)
+
 let moveAndKeepTrack (x, y, cmd: string) =
     let mutable s = Set.empty
     match dirFromStr cmd.[0] with
     | Some dir ->
-        let t =
-            match dir with
-            | Up -> 0, 1
-            | Down -> 0, -1
-            | Left -> -1, 0
-            | Right -> 1, 0
-
-        let move = addPoints t
+        let move = step dir
         let steps = int cmd.[1..]
         let mutable coord = (x, y)
         for i = 1 to steps do
@@ -76,3 +79,35 @@ let findMinimum (values: Set<int * int>) distance =
 
 // part 1:
 findMinimum intersections distance
+
+open System.Collections.Generic
+// part 2:
+let stepsTo (wire: string list) =
+    let rec loop (acc: Dictionary<(int * int), int>) currentPosition totalSteps (commands: string list) =
+        match commands with
+        | nextCommand :: otherCommands ->
+            match dirFromStr nextCommand.[0] with
+            | Some dir ->
+                let steps = int nextCommand.[1..]
+                let mutable pos = currentPosition
+                for i = 1 to steps do
+                    pos <- step dir pos
+                    incr totalSteps
+                    if not (acc.ContainsKey pos) then acc.Add(pos, !totalSteps)
+                loop acc pos totalSteps otherCommands
+            | None -> acc
+        | [] -> acc
+
+    let d = new Dictionary<(int * int), int>()
+    loop d (0, 0) (ref 0) wire
+
+let dist1 = stepsTo wire1
+let dist2 = stepsTo wire2
+
+let mutable result = Map.empty
+let minimum = System.Int32.MaxValue
+
+for item in dist1 do
+    if dist2.ContainsKey item.Key then
+        let value = dist2.Item item.Key
+        result <- result.Add(item.Key, item.Value + value)
