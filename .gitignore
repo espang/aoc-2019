@@ -7,3 +7,8 @@ src/nim/*
 src/pony/*
 !src/pony/*/*.pony
 !src/nim/*.nim
+src/kotlin/*
+!src/kotlin/*.kt
+.fake
+.ionide
+src/fsharp/aoc/obj/fsac.cache
