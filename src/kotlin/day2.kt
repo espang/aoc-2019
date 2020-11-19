@@ -27,6 +27,11 @@ fun executeInstructions(memory: MutableList<Int>, index: Int = 0) {
 
 data class Result(val noun: Int, val verb: Int)
 
+fun resultToString(r: Result): String {
+    val (noun, verb) = r
+    return "${noun * 100 + verb}"
+}
+
 fun searchFor(memory: List<Int>, wanted: Int): Result {
     for (noun in 0..99) {
         for (verb in 0..99) {
@@ -41,11 +46,6 @@ fun searchFor(memory: List<Int>, wanted: Int): Result {
     return Result(-1, -1)
 }
 
-fun pairToResult(r: Result): String {
-    val (noun, verb) = r
-    return "${noun * 100 + verb}"
-}
-
 fun main(args: Array<String>) {
     val mem = fileToMemory("day2-input.txt")
     var memory = mem.toMutableList()
@@ -54,5 +54,5 @@ fun main(args: Array<String>) {
     executeInstructions(memory)
     println("part1: ${memory[0]}")
     val result = searchFor(mem, 19690720)
-    println("part2: ${pairToResult(result)}")
+    println("part2: ${resultToString(result)}")
 }
