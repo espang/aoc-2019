@@ -12,3 +12,5 @@ src/kotlin/*
 .fake
 .ionide
 src/fsharp/aoc/obj/fsac.cache
+.lsp/
+.socket-repl-port
