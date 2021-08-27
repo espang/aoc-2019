@@ -1,3 +1,4 @@
 {:extra-paths ["resources"]
  :deps {org.clojure/math.combinatorics {:mvn/version "0.1.6"}
-        ubergraph                      {:mvn/version "0.8.2"}}}
+        ubergraph                      {:mvn/version "0.8.2"}
+        org.clojure/data.priority-map  {:mvn/version "1.0.0"}}}

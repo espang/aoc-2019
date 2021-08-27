@@ -1,4 +1,6 @@
-(ns clj.day18)
+(ns clj.day18
+  (:require
+   [clojure.data.priority-map :refer [priority-map]]))
 
 (def input "#################################################################################
 #.....#.............................#...#k......#.........#....h........#.....#.#
@@ -287,12 +289,22 @@
       (some? door-coord) (update :locations assoc door-coord \.)
       true (assoc :start next-start))))
 
+(defn update-priority-queue [queue tuples]
+  (reduce (fn [q [steps b]]
+            (if-let [steps' (get q b)]
+              (if (< steps steps')
+                (assoc q b steps)
+                q)
+              (assoc q b steps)))
+          queue
+          tuples))
+
 (defn djikstra'isch [board]
   ;; find all possible keys from board
   ;; update boards and find all possible keys from there
   ;; unitl we picked up all keys.
   ;; always use the smallest total to the keys (cmp dijkstra)
-  (let [boards #{[0 board]}]
+  (let [boards (priority-map board 0)]
     (loop [boards  boards
            steps   0
            visited #{}]
@@ -301,9 +313,9 @@
         (let [;; use the board that has the least steps first.
               ;; when b has no keys we found the minimal way
               ;; to pick up all the keys
-              board'  (apply min-key first boards)
-              boards' (disj boards board')
-              [steps-to b] board']
+              board'  (first boards)
+              [b steps-to] board'
+              boards' (dissoc boards b)]
           (when (zero? (mod steps 1000))
             (tap> (str "steps done: " steps))
             (tap> (str "boards to look at: " (count boards)))
@@ -312,14 +324,14 @@
             [steps steps-to]
             (if (contains? visited b)
               (recur boards' (inc steps) visited)
-              (recur (apply conj
-                            boards'
-                            (map (fn [[key extra-steps]]
-                                   [(+ extra-steps steps-to)
-                                    (open-door b key)])
-                                 (reachable-keys b)))
-                     (inc steps)
-                     (conj visited b)))))))))
+              (let [boards'' (update-priority-queue boards'
+                                                    (map (fn [[key extra-steps]]
+                                                           [(+ extra-steps steps-to)
+                                                            (open-door b key)])
+                                                         (reachable-keys b)))]
+                (recur boards''
+                       (inc steps)
+                       (conj visited b))))))))))
 
 (comment
   (make-board input)
